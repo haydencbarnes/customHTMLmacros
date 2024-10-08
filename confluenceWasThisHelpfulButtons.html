@@ -1,20 +1,22 @@
-<h3 style="font-weight: bold; margin-bottom: 10px;">Was this page helpful?</h3> 
+<h3 style="font-weight: bold; margin-bottom: 10px;">Was this page helpful?</h3>
 <div style="min-height: 200px;">
   <span id="helpful-message"></span>
   <div id="helpful-buttons">
-    <button class="aui-button" onclick="submitYes();">Yes</button>
+    <button class="aui-button" aria-label="Yes, this page was helpful" onclick="submitYes();">Yes</button>
     <div class="aui-dropdown">
-      <button class="aui-button">No</button>
-      <div class="aui-dropdown-menu">
+      <button class="aui-button" aria-label="No, this page was not helpful">No</button>
+      <div class="aui-dropdown-menu" role="menu">
         <ul>
-          <li><a href="#" onclick="submitNo('It was not clear');">It was not clear</a></li>
-          <li><a href="#" onclick="submitNo('It was not accurate');">It was not accurate</a></li>
-          <li><a href="#" onclick="submitNo('It was not relevant');">It was not relevant</a></li>
+          <li><a href="#" role="menuitem" onclick="submitNo('It was not clear');">It was not clear</a></li>
+          <li><a href="#" role="menuitem" onclick="submitNo('It was not accurate');">It was not accurate</a></li>
+          <li><a href="#" role="menuitem" onclick="submitNo('It was not relevant');">It was not relevant</a></li>
         </ul>
       </div>
     </div>
   </div>
 </div>  
+
+<!-- Style for dropdown menu -->
 <style>
   .aui-dropdown {
     position: relative;
@@ -47,11 +49,13 @@
     background-color: #f1f1f1;
   }
 
+  /* Show dropdown menu on hover */
   .aui-dropdown:hover .aui-dropdown-menu {
     display: block;
   }
 </style>
 
+<!-- jQuery library for AJAX requests -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
@@ -62,62 +66,40 @@
     // URL encode page title
     var pageTitleEncoded = encodeURIComponent(pageTitle);
 
+    // Function to submit positive feedback and show thank you message
     function submitYes() {
-      AJS.$.ajax({
-        dataType: 'json',
-        contentType: 'application/json',
-        type: 'POST',
-        url: '/rpc/json-rpc/confluenceservice-v2/getPage',
-        data: '[' + feedbackPageId + ']',
-        success: function (pageObject) {
-          var responseObject = [];
-          var responsePageObject = {};
-          var responseOptionsObject = {};
+      // Hide feedback buttons and show thank you message
+      AJS.$('#helpful-buttons').hide();
+      AJS.$('#helpful-message').html('Thanks for your feedback!');
+    }
 
-          responsePageObject.space = pageObject.space;
-          responsePageObject.title = pageObject.title;
-          responsePageObject.content = pageObject.content + "<p>The page \"{{pageTitle}}\" was rated as helpful on {{currentDate}}</p>";
-          responsePageObject.version = pageObject.version;
-          responsePageObject.parentId = pageObject.parentId;
-          responsePageObject.id = pageObject.id;
-          responseObject.push(responsePageObject);
+    // Function to submit negative feedback
+    function submitNo(reason) {
+      // Change this to whichever email you want the issue to go to:  
+      var feedbackUserEmail = "example@ptxtrimble.com";
+    
+      // Fetch and encode the page path (URL)
+      var pagePath = window.location.href;
+      var pagePathEncoded = encodeURIComponent(pagePath);
 
-          responseOptionsObject.versionComment = "";
-          responseOptionsObject.minorEdit = true;
-          responseObject.push(responseOptionsObject);
+      // Include the reason in the body content
+      var bodyContent = "Reason: " + reason + " (Optional: Add why this page was not helpful for you.)";
+      var bodyEncoded = encodeURIComponent(bodyContent);
+      
+      var reasonEncoded = encodeURIComponent(reason);
 
-          AJS.$.ajax({
-            dataType: 'json',
-            contentType: 'application/json',
-            type: 'POST',
-            url: '/rpc/json-rpc/confluenceservice-v2/updatePage',
-            data: JSON.stringify(responseObject)
-          });
+      // Open Gmail compose window with pre-filled details
+      var gmailComposeUrl = 'https://mail.google.com/mail/u/0/?view=cm&fs=1&to=' + feedbackUserEmail + '&su=Problem%20with%20page%20' + pageTitleEncoded + '&body=' + pagePathEncoded + '%0A%0A' + bodyEncoded;
+      window.open(gmailComposeUrl, '_blank');
+    }
 
-          AJS.$('#helpful-buttons').hide();
-          AJS.$('#helpful-message').html('Thanks for your feedback!');
-        }
-      });
-    }        
-	function submitNo(reason) {
-// Change this to whichever email you want the issue to go to:  
-var feedbackUserEmail = "example@ptxtrimble.com";
-  
-  // Fetch and encode the page path (URL)
-  var pagePath = window.location.href;
-  var pagePathEncoded = encodeURIComponent(pagePath);
+    // Attach feedback submission functions to global window object
+    window.submitYes = submitYes;
+    window.submitNo = submitNo;
+  });
+</script>
 
-  // Include the reason in the body content
-  var bodyContent = "Reason: " + reason + " (Optional: Add why this page was not helpful for you.)";
-  var bodyEncoded = encodeURIComponent(bodyContent);
-  
-  var reasonEncoded = encodeURIComponent(reason);
-
-  var gmailComposeUrl = 'https://mail.google.com/mail/u/0/?view=cm&fs=1&to=' + feedbackUserEmail + '&su=Problem%20with%20page%20' + pageTitleEncoded + '&body=' + pagePathEncoded + '%0A%0A' + bodyEncoded;
-  window.open(gmailComposeUrl, '_blank');
-}
-
-window.submitYes = submitYes;
-window.submitNo = submitNo;
- });
-</script> 
+<!-- Notes -->
+<!--
+  - This set up was confirmed to work with Confluence Server, has not been tried as an iFrame in Confluence Cloud yet.
+--> 
