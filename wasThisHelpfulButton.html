@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Form</title>
+    <style>
+        .feedback-container {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h3 {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .feedback-buttons {
+            margin-top: 20px;
+        }
+        button {
+            margin-right: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+        .dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="feedback-container">
+        <h3>Was this page helpful?</h3>
+        <div id="feedback-message"></div>
+        <div id="feedback-buttons" class="feedback-buttons">
+            <button onclick="submitFeedback('yes')">Yes</button>
+            <div class="dropdown">
+                <button>No</button>
+                <div class="dropdown-content">
+                    <a href="#" onclick="submitFeedback('not clear')">It was not clear</a>
+                    <a href="#" onclick="submitFeedback('not accurate')">It was not accurate</a>
+                    <a href="#" onclick="submitFeedback('not relevant')">It was not relevant</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function submitFeedback(response) {
+            const feedbackMessage = document.getElementById('feedback-message');
+            const feedbackButtons = document.getElementById('feedback-buttons');
+
+            if (response === 'yes') {
+                feedbackMessage.textContent = 'Thanks for your feedback!';
+                feedbackButtons.style.display = 'none';
+            } else {
+                const reason = response;
+                const pageTitle = encodeURIComponent(document.title);
+                const pagePath = encodeURIComponent(window.location.href);
+                const bodyContent = encodeURIComponent(`Reason: ${reason}\n\n(Optional: Add why this page was not helpful for you.)`);
+                const emailAddress = 'example@example.com'; // Change this to your preferred email
+
+                const gmailComposeUrl = `https://mail.google.com/mail/u/0/?view=cm&fs=1&to=${emailAddress}&su=Problem with page ${pageTitle}&body=${pagePath}%0A%0A${bodyContent}`;
+                window.open(gmailComposeUrl, '_blank');
+            }
+        }
+    </script>
+</body>
+</html>
