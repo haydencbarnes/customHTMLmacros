@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Mind Map</title>
+    <style>
+        #mapContainer {
+            width: 500px;
+            height: 300px;
+            overflow: hidden;
+            position: relative;
+        }
+        svg {
+            border: 5px solid black;
+            background-color: #f9f9f9;
+            width: 90%;
+            height: 90%;
+        }            
+	</style>
+</head>
+<body>
+
+<button id="centerButton" style="
+    padding: 10px 20px;
+    background-color: #000; /* Black background */
+    color: #fff; /* White text */
+    border: 2px solid #fff; /* White border */
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(255, 255, 255, 0.3); /* Subtle white glow */
+    cursor: pointer;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    font-weight: bold; /* Bold font */
+    text-transform: uppercase;
+    letter-spacing: 1px; /* Spacing out letters for that techy feel */
+    transition: background-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    outline: none; /* Remove outline to keep the design clean */
+">Center</button>
+
+ <svg id="mindMap" viewBox="0 0 1620 1215" preserveAspectRatio="xMidYMid meet">
+    <!-- Curved Lines -->
+    <path d="M 800 600 Q 600 450 400 300" stroke="black" stroke-width="2" fill="none"/>
+    <path d="M 800 600 Q 1000 450 1200 300" stroke="black" stroke-width="2" fill="none"/>
+    <path d="M 800 600 Q 600 750 400 900" stroke="black" stroke-width="2" fill="none"/>
+    <path d="M 800 600 Q 1000 750 1200 900" stroke="black" stroke-width="2" fill="none"/>          
+
+<!-- Main Node -->
+<circle id="central-circle" cx="800" cy="600" r="50" fill="grey" />
+<text id="central-text" x="800" y="600" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle" fill="white">Reviews</text>     
+
+<!-- Additional Nodes -->     
+<g>
+        <circle id="node1-circle" cx="400" cy="300" r="40" fill="green" />
+        <text id="node1-text" x="400" y="300" font-family="Arial" font-size="18" text-anchor="middle" fill="white">Project Reviews</text>
+    </g>
+    <g>
+        <circle id="node2-circle" cx="1200" cy="300" r="40" fill="blue" />
+        <text id="node2-text" x="1200" y="300" font-family="Arial" font-size="18" text-anchor="middle" fill="white">Node 2</text>
+    </g>
+    <g>
+        <circle id="node3-circle" cx="400" cy="900" r="40" fill="red" />
+        <text id="node3-text" x="400" y="900" font-family="Arial" font-size="18" text-anchor="middle" fill="white">Node 3</text>
+    </g>
+    <g>
+        <circle id="node4-circle" cx="1200" cy="900" r="40" fill="purple" />
+        <text id="node4-text" x="1200" y="900" font-family="Arial" font-size="18" text-anchor="middle" fill="white">Node 4</text>
+    </g>
+ </svg>
+</div> 
+<script>    
+ document.addEventListener("DOMContentLoaded", function () {
+    const svg = document.getElementById('mindMap');
+    let isPanning = false;
+    let startPoint = { x: 0, y: 0 };
+    let currentViewBox = svg.viewBox.baseVal;
+    
+    // Store the original viewBox for the centering function
+    let originalViewBox = {
+        x: currentViewBox.x,
+        y: currentViewBox.y,
+        width: currentViewBox.width,
+        height: currentViewBox.height
+    };
+
+    // Function to calculate the position of the mouse relative to the SVG
+    function getSVGPoint(event) {
+        let pt = svg.createSVGPoint();
+        pt.x = event.clientX;
+        pt.y = event.clientY;
+        return pt.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    // Functions for panning
+    function startPan(event) {
+        isPanning = true;
+        startPoint = getSVGPoint(event);
+    }
+
+    function pan(event) {
+        if (isPanning) {
+            requestAnimationFrame(() => {
+                let pt = getSVGPoint(event);
+                let dx = pt.x - startPoint.x;
+                let dy = pt.y - startPoint.y;
+
+                currentViewBox.x -= dx;
+                currentViewBox.y -= dy;
+            });
+        }
+    }
+
+    function endPan(event) {
+        isPanning = false;
+    }
+
+    // Function to center the SVG
+    function centerDiagram() {
+        currentViewBox.x = originalViewBox.x;
+        currentViewBox.y = originalViewBox.y;
+        currentViewBox.width = originalViewBox.width;
+        currentViewBox.height = originalViewBox.height;
+    }
+
+    // Function for zooming
+    function zoom(event) {
+        event.preventDefault();
+        let zoomFactor = event.deltaY < 0 ? 0.9 : 1.1;
+        let mousePoint = getSVGPoint(event);
+
+        let newWidth = currentViewBox.width * zoomFactor;
+        let newHeight = currentViewBox.height * zoomFactor;
+        let newX = mousePoint.x - (mousePoint.x - currentViewBox.x) * zoomFactor;
+        let newY = mousePoint.y - (mousePoint.y - currentViewBox.y) * zoomFactor;
+
+        currentViewBox.x = newX;
+        currentViewBox.y = newY;
+        currentViewBox.width = newWidth;
+        currentViewBox.height = newHeight;
+    }
+
+    // Add event listeners for panning and zooming
+    svg.addEventListener('mousedown', startPan);
+    svg.addEventListener('mousemove', pan);
+    svg.addEventListener('mouseup', endPan);
+    svg.addEventListener('mouseleave', endPan);
+    svg.addEventListener('wheel', zoom);
+    document.getElementById('centerButton').addEventListener('click', centerDiagram);
+
+    // Function to adjust the circle size based on the text length
+    function adjustCircleSize(textId, circleId, isMainNode) {
+        var textElement = document.getElementById(textId);
+        var circleElement = document.getElementById(circleId);
+
+        // Get the length of the text element
+        var textLength = textElement.getComputedTextLength();
+
+        // Calculate the radius. For the main node, ensure a minimum size is maintained.
+        var radius = isMainNode ? Math.max(50, textLength / 2 + 20) : textLength / 2 + 10;
+
+        // Set the new radius
+        circleElement.setAttribute('r', radius.toString());
+    }
+
+    // Adjust the size of the circles based on the text
+    adjustCircleSize('node1-text', 'node1-circle', false);
+    adjustCircleSize('node2-text', 'node2-circle', false);
+    adjustCircleSize('node3-text', 'node3-circle', false);
+    adjustCircleSize('node4-text', 'node4-circle', false);
+    adjustCircleSize('central-text', 'central-circle', true); // Assuming you have a central-text and central-circle ID
+});
+ </script>
+  </body>
+</html>
